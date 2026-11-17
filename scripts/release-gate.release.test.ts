@@ -97,6 +97,12 @@ describe("parseFrontmatter", () => {
   it("names a missing field", () => {
     expect(() => parseFrontmatter(audit().replace(/^commit:.*\n/m, ""))).toThrow(/missing "commit"/);
   });
+
+  it("rejects an audit that names no reviewer", () => {
+    expect(() => parseFrontmatter(audit().replace(/^reviewers:.*\n/m, "reviewers: []\n"))).toThrow(
+      /names no reviewer/,
+    );
+  });
 });
 
 describe("parseFindings", () => {
@@ -281,6 +287,15 @@ describe("runGate against a throwaway repo", () => {
       ok: false,
       reason: "no audit for v1.2.3: security/audits/v1.2.3.md does not exist",
     });
+  });
+
+  it("fails when the audit names no reviewer", () => {
+    const sha = commit("base");
+    write("security/audits/v1.2.3.md", audit({ commit: sha }).replace(/^reviewers:.*\n/m, "reviewers: []\n"));
+    commit("audit");
+    const result = runGate({ cwd: repo });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toMatch(/names no reviewer/);
   });
 
   it("fails when the audit's version doesn't match", () => {

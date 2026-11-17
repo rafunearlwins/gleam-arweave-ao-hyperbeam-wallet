@@ -70,13 +70,18 @@ export function parseFrontmatter(text) {
     if (!fields[key]?.trim()) throw new Error(`audit frontmatter is missing "${key}"`);
   }
 
+  const reviewers = parseList(fields.reviewers);
+  if (reviewers.length === 0) {
+    throw new Error('audit frontmatter "reviewers" names no reviewer; list who audited it');
+  }
+
   return {
     meta: {
       version: unquote(fields.version),
       commit: unquote(fields.commit),
       previous: unquote(fields.previous),
       date: unquote(fields.date),
-      reviewers: parseList(fields.reviewers),
+      reviewers,
     },
     body: lines.slice(end + 1).join("\n"),
   };
